@@ -12,44 +12,57 @@ const state = {
     filteredTransactions: []
 };
 
-const { extractTextFromPDF, parseTransactions } = window.StatementParser;
+const {
+    extractTextFromPDF: extractPdfText,
+    parseTransactions: parseStatementTransactions
+} = window.StatementParser;
 
 // Default categories
 const defaultCategories = [
     {
         name: 'Alimentos',
-        keywords: ['атб', 'сільпо', 'ашан', 'novus', 'эко маркет', 'fozzy', 'varus', 'megamarket', 'маркет'],
+        keywords: ['automercado', 'masxmenos', 'walmart', 'pali', 'maxi pali', 'pricesmart', 'fresh market', 'megasuper', 'am pm', 'supermercado'],
         color: '#10b981'
     },
     {
         name: 'Restaurantes/Cafeterías',
-        keywords: ['макдональдс', 'kfc', 'pizza', 'пицца', 'кафе', 'ресторан', 'їжа', 'бургер'],
+        keywords: ['mcdonald', 'kfc', 'burger king', 'subway', 'pizza', 'taco bell', 'starbucks', 'restaurante', 'cafeteria', 'soda', 'ubereats', 'rappi'],
         color: '#f59e0b'
     },
     {
         name: 'Transporte',
-        keywords: ['bolt', 'uber', 'uklon', 'паркування', 'азс', 'бензин', 'wog', 'okko', 'metro'],
+        keywords: ['uber', 'didi', 'inDriver', 'gasolina', 'gasolinera', 'delta', 'puma', 'uno', 'texaco', 'peaje', 'parking', 'parqueo'],
         color: '#3b82f6'
     },
     {
         name: 'Servicios públicos',
-        keywords: ['київенерго', 'водоканал', 'теплоенерго', 'gas', 'utility', 'комунальн'],
+        keywords: ['ice', 'kolbi', 'cnfl', 'aya', 'acueductos', 'electricidad', 'agua', 'internet', 'telefonia', 'claro', 'liberty', 'tigo'],
         color: '#ef4444'
     },
     {
         name: 'Farmacia/Salud',
-        keywords: ['аптека', 'pharmacy', 'medical', 'clinic', 'лікарня', 'hospital'],
+        keywords: ['farmavalue', 'fischel', 'la bomba', 'sucre', 'farmacia', 'hospital', 'clinica', 'laboratorio', 'medico', 'dra'],
         color: '#ec4899'
     },
     {
         name: 'Ropa/Calzado',
-        keywords: ['h&m', 'zara', 'mango', 'reserved', 'fashion', 'одяг', 'взуття'],
+        keywords: ['h&m', 'zara', 'mango', 'siman', 'ekono', 'pequeno mundo', 'universal', 'tienda', 'ropa', 'calzado'],
         color: '#8b5cf6'
     },
     {
         name: 'Servicios en línea',
-        keywords: ['netflix', 'spotify', 'google', 'apple', 'amazon', 'steam', 'playstation'],
+        keywords: ['netflix', 'spotify', 'google', 'apple', 'amazon', 'steam', 'playstation', 'disney', 'youtube', 'icloud'],
         color: '#06b6d4'
+    },
+    {
+        name: 'Transferencias/SINPE',
+        keywords: ['sinpe', 'sinpe movil', 'transferencia', 'transfer', 'deposito'],
+        color: '#06b6d4'
+    },
+    {
+        name: 'Pets',
+        keywords: ['pet', 'mascota', 'vet', 'perro', 'gato', 'animal'],
+        color: '#14b8a6'
     }
 ];
 
@@ -175,7 +188,7 @@ async function handleFileSelect(e) {
     document.getElementById('loader').classList.remove('hidden');
     
     try {
-        const { text, lines, linesWithX, pages } = await extractTextFromPDF(file);
+        const { text, lines, linesWithX, pages } = await extractPdfText(file);
         state.pdfText = text;
         state.pdfLines = lines;
         state.pdfLinesWithX = linesWithX;
@@ -218,7 +231,7 @@ function analyzeTransactions() {
     }
     
     // Parse transactions
-    let transactions = parseTransactions(state.pdfText, state.pdfPages);
+    let transactions = parseStatementTransactions(state.pdfText, state.pdfPages);
     
     if (transactions.length === 0) {
         alert('No se pudieron encontrar transacciones en el extracto. Es posible que el formato PDF no sea compatible. Prueba con otro archivo.');

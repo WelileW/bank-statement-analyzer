@@ -17,6 +17,10 @@ const {
     parseTransactions: parseStatementTransactions
 } = window.StatementParser;
 
+const CATEGORIES_COOKIE_NAME = 'statement_categories';
+const CATEGORIES_COOKIE_DAYS = 365;
+const CATEGORIES_LOCAL_STORAGE_KEY = 'categories';
+
 // Default categories
 const defaultCategories = [
     {
@@ -84,16 +88,84 @@ document.addEventListener('DOMContentLoaded', () => {
     setupEventListeners();
 });
 
-// Load categories from localStorage or use defaults
+function setCookie(name, value, days) {
+    const expires = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toUTCString();
+    document.cookie = `${name}=${encodeURIComponent(value)}; expires=${expires}; path=/; SameSite=Lax`;
+}
+
+function getCookie(name) {
+    const prefix = `${name}=`;
+    const parts = document.cookie.split(';');
+
+    for (const rawPart of parts) {
+        const part = rawPart.trim();
+        if (part.startsWith(prefix)) {
+            return decodeURIComponent(part.substring(prefix.length));
+        }
+    }
+
+    return null;
+}
+
+function setLocalStorageValue(key, value) {
+    try {
+        localStorage.setItem(key, value);
+        return true;
+    } catch (error) {
+        console.warn('Could not write to localStorage:', error);
+        return false;
+    }
+}
+
+function getLocalStorageValue(key) {
+    try {
+        return localStorage.getItem(key);
+    } catch (error) {
+        console.warn('Could not read localStorage:', error);
+        return null;
+    }
+}
+
+// Load categories from cookies or use defaults
 function initCategories() {
-    const savedCategories = localStorage.getItem('categories');
-    state.categories = savedCategories ? JSON.parse(savedCategories) : defaultCategories;
+    let savedCategories = null;
+    let saveCookieAfterLoad = false;
+
+    const cookieValue = getCookie(CATEGORIES_COOKIE_NAME);
+    if (cookieValue) {
+        try {
+            savedCategories = JSON.parse(cookieValue);
+        } catch (error) {
+            console.warn('Could not parse categories cookie:', error);
+        }
+    }
+
+    if (!savedCategories) {
+        const legacyLocalStorageValue = getLocalStorageValue(CATEGORIES_LOCAL_STORAGE_KEY);
+        if (legacyLocalStorageValue) {
+            try {
+                savedCategories = JSON.parse(legacyLocalStorageValue);
+                saveCookieAfterLoad = true;
+            } catch (error) {
+                console.warn('Could not parse legacy localStorage categories:', error);
+            }
+        }
+    }
+
+    state.categories = Array.isArray(savedCategories) ? savedCategories : defaultCategories;
+
+    if (saveCookieAfterLoad) {
+        setCookie(CATEGORIES_COOKIE_NAME, JSON.stringify(state.categories), CATEGORIES_COOKIE_DAYS);
+    }
+
+    setLocalStorageValue(CATEGORIES_LOCAL_STORAGE_KEY, JSON.stringify(state.categories));
     renderCategories();
 }
 
 // Save categories
 function saveCategories() {
-    localStorage.setItem('categories', JSON.stringify(state.categories));
+    setCookie(CATEGORIES_COOKIE_NAME, JSON.stringify(state.categories), CATEGORIES_COOKIE_DAYS);
+    setLocalStorageValue(CATEGORIES_LOCAL_STORAGE_KEY, JSON.stringify(state.categories));
 }
 
 // Render categories
@@ -127,6 +199,28 @@ function addCategory() {
     
     if (!name || keywords.length === 0) {
         alert('Completa el nombre de la categoría y las palabras clave');
+        return;
+    }
+
+    const existingCategory = state.categories.find(
+        category => category.name.toLowerCase() === name.toLowerCase()
+    );
+
+    if (existingCategory) {
+        const keywordSet = new Set(existingCategory.keywords.map(keyword => keyword.toLowerCase()));
+        const newKeywords = keywords.filter(keyword => !keywordSet.has(keyword.toLowerCase()));
+
+        if (newKeywords.length === 0) {
+            alert('Estas palabras clave ya existen en la categoría');
+            return;
+        }
+
+        existingCategory.keywords.push(...newKeywords);
+        saveCategories();
+        renderCategories();
+
+        nameInput.value = '';
+        keywordsInput.value = '';
         return;
     }
     

@@ -21,48 +21,60 @@ const {
 const defaultCategories = [
     {
         name: 'Alimentos',
-        keywords: ['automercado', 'masxmenos', 'walmart', 'pali', 'maxi pali', 'pricesmart', 'fresh market', 'megasuper', 'am pm', 'supermercado'],
-        color: '#10b981'
+        keywords: ['automercado', 'masxmenos', 'walmart', 'pali', 'maxi pali', 'pricesmart', 'fresh market', 'megasuper', 'am pm', 'super', 'mercado'],
+        color: '#16a34a'
     },
     {
         name: 'Restaurantes/Cafeterías',
-        keywords: ['mcdonald', 'kfc', 'burger king', 'subway', 'pizza', 'taco bell', 'starbucks', 'restaurante', 'cafeteria', 'soda', 'ubereats', 'rappi'],
-        color: '#f59e0b'
+        keywords: ['mcdonald', 'kfc', 'burger king', 'subway', 'pizza', 'taco bell', 'starbucks', 'restaurante', 'cafeteria', 'soda', 'ubereats', 'rappi', 'PAPA JOHN', 'CAFE', 'pops'],
+        color: '#f97316'
     },
     {
         name: 'Transporte',
-        keywords: ['uber', 'didi', 'inDriver', 'gasolina', 'gasolinera', 'delta', 'puma', 'uno', 'texaco', 'peaje', 'parking', 'parqueo'],
-        color: '#3b82f6'
-    },
-    {
-        name: 'Servicios públicos',
-        keywords: ['ice', 'kolbi', 'cnfl', 'aya', 'acueductos', 'electricidad', 'agua', 'internet', 'telefonia', 'claro', 'liberty', 'tigo'],
-        color: '#ef4444'
+        keywords: ['uber', 'didi', 'inDriver', 'gasolina', 'gasolinera', 'delta', 'puma', 'uno', 'texaco', 'peaje', 'parking', 'parqueo', 'RUTA'],
+        color: '#2563eb'
     },
     {
         name: 'Farmacia/Salud',
         keywords: ['farmavalue', 'fischel', 'la bomba', 'sucre', 'farmacia', 'hospital', 'clinica', 'laboratorio', 'medico', 'dra'],
-        color: '#ec4899'
+        color: '#dc2626'
     },
     {
         name: 'Ropa/Calzado',
         keywords: ['h&m', 'zara', 'mango', 'siman', 'ekono', 'pequeno mundo', 'universal', 'tienda', 'ropa', 'calzado'],
-        color: '#8b5cf6'
+        color: '#7c3aed'
     },
     {
-        name: 'Servicios en línea',
-        keywords: ['netflix', 'spotify', 'google', 'apple', 'amazon', 'steam', 'playstation', 'disney', 'youtube', 'icloud'],
-        color: '#06b6d4'
+        name: 'Gastos fijos',
+        keywords: ['netflix', 'spotify', 'google', 'apple', 'amazon', 'steam', 'playstation', 'disney', 'youtube', 'icloud', 'CCSS',
+             'ice', 'kolbi', 'cnfl', 'aya', 'acueductos', 'electricidad', 'agua', 'internet', 'telefonia', 'claro', 'liberty', 'tigo',
+             'SMARTFIT'],
+        color: '#0891b2'
     },
     {
         name: 'Transferencias/SINPE',
-        keywords: ['sinpe', 'sinpe movil', 'transferencia', 'transfer', 'deposito'],
-        color: '#06b6d4'
+        keywords: ['sinpe', 'sinpe movil', 'transferencia', 'transfer', 'deposito', 'SALDO', 'TEF A', 'TEF B', 'intereses'],
+        color: '#0d9488'
     },
     {
-        name: 'Pets',
+        name: 'Mascotas',
         keywords: ['pet', 'mascota', 'vet', 'perro', 'gato', 'animal'],
-        color: '#14b8a6'
+        color: '#ca8a04'
+    },
+    {
+        name: 'Educación',
+        keywords: ['educacion', 'education', 'curso', 'cursos', 'academy', 'universidad', 'udemy', 'coursera', 'platzi', 'domestika', 'LIBRERIA'],
+        color: '#4f46e5'
+    },
+    {
+        name: 'Descanso',
+        keywords: ['descanso', 'ocio', 'recreacion', 'parque'],
+        color: '#65a30d'
+    },
+    {
+        name: 'Compras en línea',
+        keywords: ['online shopping', 'compra online', 'ecommerce', 'amazon', 'aliexpress', 'ebay', 'mercadolibre', 'shopify', 'temu', 'shein'],
+        color: '#db2777'
     }
 ];
 
@@ -88,11 +100,11 @@ function saveCategories() {
 function renderCategories() {
     const container = document.getElementById('categoriesList');
     container.innerHTML = state.categories.map((cat, index) => `
-        <div class="category-item">
+        <div class="category-item" style="border-color: ${cat.color}33; border-left: 6px solid ${cat.color};">
             <button class="delete-category" onclick="deleteCategory(${index})">×</button>
-            <h4>${cat.name}</h4>
+            <h4 style="color: ${cat.color};">${cat.name}</h4>
             <div class="category-keywords">
-                ${cat.keywords.map(kw => `<span>${kw}</span>`).join('')}
+                ${cat.keywords.map(kw => `<span style="background: ${cat.color}22; color: ${cat.color};">${kw}</span>`).join('')}
             </div>
         </div>
     `).join('');
@@ -133,7 +145,7 @@ function addCategory() {
 
 // Generate random color
 function getRandomColor() {
-    const colors = ['#10b981', '#f59e0b', '#3b82f6', '#ef4444', '#ec4899', '#8b5cf6', '#06b6d4', '#f97316'];
+    const colors = ['#16a34a', '#f97316', '#2563eb', '#dc2626', '#7c3aed', '#0891b2', '#0d9488', '#ca8a04', '#4f46e5', '#65a30d', '#db2777'];
     return colors[Math.floor(Math.random() * colors.length)];
 }
 
@@ -247,7 +259,6 @@ function analyzeTransactions() {
     document.getElementById('resultsSection').classList.remove('hidden');
     
     // Render
-    renderSummary();
     renderChart();
     renderCategoryDetails();
     renderTransactionsTable();
@@ -310,8 +321,12 @@ function renderSummary() {
 // Render pie chart
 function renderChart() {
     const categoryTotals = {};
+    const excludedFromPie = 'transferencias/sinpe';
     
     state.transactions.forEach(t => {
+        if ((t.category || '').toLowerCase() === excludedFromPie) {
+            return;
+        }
         categoryTotals[t.category] = (categoryTotals[t.category] || 0) + t.amount;
     });
     

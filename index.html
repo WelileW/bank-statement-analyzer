@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Análisis de extracto bancario</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📊 Analizador de extractos bancarios</h1>
+            <p>Sube un extracto PDF para analizar gastos por categorías</p>
+        </header>
+
+        <section class="upload-section">
+            <div class="upload-box">
+                <input type="file" id="pdfFile" accept=".pdf" hidden>
+                <label for="pdfFile" class="upload-label">
+                    <div class="upload-icon">📄</div>
+                    <div>Selecciona un archivo PDF</div>
+                    <div class="upload-hint">o arrástralo aquí</div>
+                </label>
+            </div>
+            <div id="fileName" class="file-name"></div>
+        </section>
+
+        <section id="loader" class="loader hidden">
+            <div class="spinner"></div>
+            <p>Procesando extracto...</p>
+        </section>
+
+        <section id="categoriesSection" class="categories-section hidden">
+            <h2>⚙️ Configuración de categorías</h2>
+            <p class="hint">Añade palabras clave para categorizar transacciones automáticamente</p>
+            
+            <div id="categoriesList" class="categories-list"></div>
+            
+            <div class="add-category">
+                <input type="text" id="newCategoryName" placeholder="Nombre de la categoría">
+                <input type="text" id="newCategoryKeywords" placeholder="Palabras clave separadas por comas">
+                <button id="addCategoryBtn" class="btn btn-primary">+ Añadir categoría</button>
+            </div>
+            
+            <button id="analyzeBtn" class="btn btn-success">Analizar</button>
+        </section>
+
+        <section id="resultsSection" class="results-section hidden">
+            <h2>📈 Resultados del análisis</h2>
+            
+            <div class="summary-cards">
+                <div class="card">
+                    <div class="card-label">Transacciones totales</div>
+                    <div class="card-value" id="totalTransactions">0</div>
+                </div>
+                <div class="card">
+                    <div class="card-label">Gasto total</div>
+                    <div class="card-value" id="totalAmount">0 ₴</div>
+                </div>
+                <div class="card">
+                    <div class="card-label">Categorías</div>
+                    <div class="card-value" id="totalCategories">0</div>
+                </div>
+            </div>
+
+            <div class="results-grid">
+                <div class="chart-container">
+                    <h3>Distribución por categorías</h3>
+                    <canvas id="pieChart"></canvas>
+                </div>
+                
+                <div class="categories-summary">
+                    <h3>Detalle</h3>
+                    <div id="categoryDetails"></div>
+                </div>
+            </div>
+
+            <div class="transactions-table">
+                <h3>Todas las transacciones</h3>
+                <div class="table-controls">
+                    <input type="text" id="searchTransactions" placeholder="🔍 Buscar...">
+                    <select id="filterCategory">
+                        <option value="">Todas las categorías</option>
+                    </select>
+                </div>
+                <div class="table-wrapper">
+                    <table id="transactionsTable">
+                        <thead>
+                            <tr>
+                                <th>Fecha</th>
+                                <th>Descripción</th>
+                                <th>Importe</th>
+                                <th>Categoría</th>
+                            </tr>
+                        </thead>
+                        <tbody id="transactionsBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="export-section">
+                <button id="exportBtn" class="btn btn-secondary">📥 Exportar a CSV</button>
+            </div>
+        </section>
+    </div>
+
+    <!-- PDF.js library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>

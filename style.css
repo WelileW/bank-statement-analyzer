@@ -385,20 +385,6 @@ header p {
     font-size: 0.9em;
 }
 
-.category-bar {
-    height: 6px;
-    background: #e0e0e0;
-    border-radius: 3px;
-    overflow: hidden;
-    margin-top: 8px;
-}
-
-.category-bar-fill {
-    height: 100%;
-    background: #667eea;
-    transition: width 0.5s;
-}
-
 /* Transactions Table */
 .transactions-table {
     margin-top: 40px;

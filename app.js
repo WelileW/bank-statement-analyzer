@@ -522,16 +522,7 @@ function renderChart() {
             },
             plugins: {
                 legend: {
-                    position: 'bottom',
-                    onClick: (event, legendItem) => {
-                        const categoryName = legendItem?.text;
-                        if (!categoryName) {
-                            return;
-                        }
-
-                        state.selectedCategory = categoryName;
-                        filterTransactions();
-                    }
+                    position: 'bottom'
                 },
                 tooltip: {
                     callbacks: {
@@ -561,15 +552,13 @@ function renderCategoryDetails() {
         categoryTotals[t.category].count += 1;
     });
     
-    const totalAmount = state.transactions.reduce((sum, t) => sum + t.amount, 0);
-    const currencySymbol = getCurrencySymbol(getPrimaryCurrency(state.transactions));
     const selectedCategory = state.selectedCategory;
+    const currencySymbol = getCurrencySymbol(getPrimaryCurrency(state.transactions));
     
     // Sort by amount descending
     const sorted = Object.entries(categoryTotals).sort((a, b) => b[1].total - a[1].total);
     
     const html = sorted.map(([category, data]) => {
-        const percentage = ((data.total / totalAmount) * 100).toFixed(1);
         const isActive = selectedCategory === category;
 
         return `
@@ -578,10 +567,7 @@ function renderCategoryDetails() {
                     <span class="category-name">${category}</span>
                     <span class="category-amount">${data.total.toFixed(2)} ${currencySymbol}</span>
                 </div>
-                <div class="category-percentage">${data.count} transacciones • ${percentage}%</div>
-                <div class="category-bar">
-                    <div class="category-bar-fill" style="width: ${percentage}%"></div>
-                </div>
+                <div class="category-percentage">${data.count} transacciones</div>
             </div>
         `;
     }).join('');

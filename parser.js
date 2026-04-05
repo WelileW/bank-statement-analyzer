@@ -123,6 +123,11 @@ function cleanDescription(row, debitRaw, creditRaw) {
     return description;
 }
 
+function isUnsupportedTransactionDescription(description) {
+    const normalized = normalizeForMatch(description || '');
+    return normalized.includes('INTERESES');
+}
+
 function mapRowsToTransactions(rows, currentCurrency) {
     const transactions = [];
 
@@ -146,6 +151,10 @@ function mapRowsToTransactions(rows, currentCurrency) {
         }
 
         const description = cleanDescription(row, debitRaw, creditRaw);
+
+        if (isUnsupportedTransactionDescription(description)) {
+            continue;
+        }
 
         transactions.push({
             date: row.date,
@@ -241,6 +250,10 @@ function parseTransactionsFromText(text) {
             const description = match[2].trim();
             let amount = parseFloat(match[3].replace(',', '.').replace(/\s/g, ''));
 
+            if (isUnsupportedTransactionDescription(description)) {
+                continue;
+            }
+
             if (description.length > 3 && Math.abs(amount) > 0 && amount < 0) {
                 amount = Math.abs(amount);
                 tempTransactions.push({
@@ -279,6 +292,10 @@ function parseTransactionsFromText(text) {
             .trim()
             .replace(/\s+/g, ' ')
             .slice(0, 100);
+
+        if (isUnsupportedTransactionDescription(description)) {
+            continue;
+        }
 
         if (description.length <= 3 || amount <= 0) {
             continue;

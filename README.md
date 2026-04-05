@@ -21,3 +21,7 @@ Early prototype. Currently experimenting with parsing and data extraction.
 - Improve PDF parsing
 - Categorize transactions
 - Export to CSV / dashboard
+
+## TODO
+
+- Teach the parser to correctly handle amounts lower than 1.

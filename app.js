@@ -10,7 +10,8 @@ const state = {
     transactions: [],
     categories: [],
     filteredTransactions: [],
-    selectedCategory: ''
+    selectedCategory: '',
+    excludedTransactionIds: new Set()
 };
 
 const {
@@ -21,6 +22,7 @@ const {
 const CATEGORIES_COOKIE_NAME = 'statement_categories';
 const CATEGORIES_COOKIE_DAYS = 365;
 const CATEGORIES_LOCAL_STORAGE_KEY = 'categories';
+const USD_TO_COLONES_RATE = 470;
 
 // Default categories
 const defaultCategories = [
@@ -444,6 +446,16 @@ function getPrimaryCurrency(transactions) {
     return primary;
 }
 
+function convertToColones(amount, currency) {
+    const normalized = (currency || '').toUpperCase();
+
+    if (normalized.includes('DOLLAR') || normalized.includes('USD')) {
+        return amount * USD_TO_COLONES_RATE;
+    }
+
+    return amount;
+}
+
 // Render summary
 function renderSummary() {
     const total = state.transactions.length;
@@ -473,12 +485,12 @@ function renderChart() {
         if ((t.category || '').toLowerCase() === excludedFromPie) {
             return;
         }
-        categoryTotals[t.category] = (categoryTotals[t.category] || 0) + t.amount;
+        categoryTotals[t.category] = (categoryTotals[t.category] || 0) + convertToColones(t.amount, t.currency);
     });
     
     const labels = Object.keys(categoryTotals);
     const data = Object.values(categoryTotals);
-    const currencySymbol = getCurrencySymbol(getPrimaryCurrency(state.transactions));
+    const currencySymbol = '₡';
     const colors = labels.map(label => {
         const cat = state.categories.find(c => c.name === label);
         return cat ? cat.color : '#999999';
@@ -553,12 +565,12 @@ function renderCategoryDetails() {
         if (!categoryTotals[t.category]) {
             categoryTotals[t.category] = { total: 0, count: 0 };
         }
-        categoryTotals[t.category].total += t.amount;
+        categoryTotals[t.category].total += convertToColones(t.amount, t.currency);
         categoryTotals[t.category].count += 1;
     });
     
     const selectedCategory = state.selectedCategory;
-    const currencySymbol = getCurrencySymbol(getPrimaryCurrency(state.transactions));
+    const currencySymbol = '₡';
     
     // Sort by amount descending
     const sorted = Object.entries(categoryTotals).sort((a, b) => b[1].total - a[1].total);
@@ -591,13 +603,22 @@ function showCategoryTransactions(encodedCategoryName) {
 function renderTransactionsTable() {
     const tbody = document.getElementById('transactionsBody');
     const title = document.getElementById('transactionsTitle');
+    const totalElement = document.getElementById('transactionsTotal');
+    const currencySymbol = '₡';
+    const visibleTotal = state.filteredTransactions
+        .filter(transaction => !state.excludedTransactionIds.has(transaction.id))
+        .reduce((sum, transaction) => sum + convertToColones(transaction.amount, transaction.currency), 0);
 
     if (title) {
         title.textContent = state.selectedCategory || 'Todas las transacciones';
     }
+
+    if (totalElement) {
+        totalElement.textContent = `• ${visibleTotal.toFixed(2)} ${currencySymbol}`;
+    }
     
     const html = state.filteredTransactions.map(t => `
-        <tr>
+        <tr class="${state.excludedTransactionIds.has(t.id) ? 'transaction-excluded' : ''}" onclick="toggleTransactionExcluded('${t.id}')">
             <td class="transaction-date">${t.date}</td>
             <td>${t.description}</td>
             <td class="transaction-amount">-${t.amount.toFixed(2)} ${getCurrencySymbol(t.currency)}</td>
@@ -610,6 +631,16 @@ function renderTransactionsTable() {
     `).join('');
     
     tbody.innerHTML = html;
+}
+
+function toggleTransactionExcluded(transactionId) {
+    if (state.excludedTransactionIds.has(transactionId)) {
+        state.excludedTransactionIds.delete(transactionId);
+    } else {
+        state.excludedTransactionIds.add(transactionId);
+    }
+
+    renderTransactionsTable();
 }
 
 // Filter transactions

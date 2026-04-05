@@ -337,6 +337,12 @@ header p {
     font-size: 1.3em;
 }
 
+.transactions-total {
+    margin-left: 8px;
+    color: #667eea;
+    font-weight: 600;
+}
+
 .categories-summary {
     background: #f8f9ff;
     padding: 25px;
@@ -442,6 +448,14 @@ tbody tr {
 
 tbody tr:hover {
     background: #f8f9ff;
+}
+
+tbody tr.transaction-excluded {
+    opacity: 0.6;
+}
+
+tbody tr.transaction-excluded td {
+    text-decoration: line-through;
 }
 
 td {

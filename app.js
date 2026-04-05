@@ -26,7 +26,7 @@ const CATEGORIES_LOCAL_STORAGE_KEY = 'categories';
 const defaultCategories = [
     {
         name: 'Alimentos',
-        keywords: ['automercado', 'masxmenos', 'walmart', 'pali', 'maxi pali', 'pricesmart', 'fresh market', 'megasuper', 'am pm', 'ampm', 'mxm', 'super', 'mercado'],
+        keywords: ['automercado', 'masxmenos', 'walmart', 'pali', 'maxi pali', 'pricesmart', 'price smart', 'fresh market', 'megasuper', 'am pm', 'ampm', 'mxm', 'super', 'mercado'],
         color: '#16a34a'
     },
     {
@@ -56,7 +56,7 @@ const defaultCategories = [
     },
     {
         name: 'Gastos fijos',
-        keywords: ['netflix', 'spotify', 'google', 'apple', 'amazon', 'steam', 'playstation', 'disney', 'youtube', 'icloud', 'CCSS',
+        keywords: ['netflix', 'spotify', 'google', 'apple', 'steam', 'playstation', 'disney', 'youtube', 'icloud', 'CCSS',
              'ice', 'kolbi', 'cnfl', 'aya', 'acueductos', 'electricidad', 'agua', 'internet', 'telefonia', 'claro', 'liberty', 'tigo',
              'SMARTFIT', 'chatgpt', 'openai', 'opensource'],
         color: '#0891b2'
@@ -392,9 +392,14 @@ function analyzeTransactions() {
     
     // Categorize
     transactions = categorizeTransactions(transactions);
+    transactions = transactions.map((transaction, index) => ({
+        ...transaction,
+        id: transaction.id || `tx-${index}`
+    }));
     state.transactions = transactions;
     state.filteredTransactions = transactions;
     state.selectedCategory = '';
+    state.excludedTransactionIds.clear();
     
     // Show results
     document.getElementById('resultsSection').classList.remove('hidden');

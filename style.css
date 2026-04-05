@@ -292,6 +292,7 @@ header p {
     grid-template-columns: 1fr 1fr;
     gap: 30px;
     margin-bottom: 40px;
+    align-items: stretch;
 }
 
 @media (max-width: 768px) {
@@ -318,7 +319,8 @@ header p {
     background: #f8f9ff;
     padding: 25px;
     border-radius: 12px;
-    max-height: 400px;
+    height: 100%;
+    max-height: none;
     overflow-y: auto;
 }
 

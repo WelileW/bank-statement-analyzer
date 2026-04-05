@@ -146,6 +146,28 @@ header p {
     position: relative;
 }
 
+.category-reset-item {
+    border: 2px dashed #9ca3af;
+    border-left: 6px solid #6b7280;
+    text-align: left;
+    cursor: pointer;
+    width: 100%;
+}
+
+.category-reset-item h4 {
+    color: #374151;
+}
+
+.category-reset-item .category-keywords span {
+    background: #e5e7eb;
+    color: #374151;
+}
+
+.category-reset-item:hover {
+    background: #eef2ff;
+    border-color: #6b7280;
+}
+
 .category-item h4 {
     color: #667eea;
     margin-bottom: 8px;

@@ -26,44 +26,49 @@ const CATEGORIES_LOCAL_STORAGE_KEY = 'categories';
 const defaultCategories = [
     {
         name: 'Alimentos',
-        keywords: ['automercado', 'masxmenos', 'walmart', 'pali', 'maxi pali', 'pricesmart', 'fresh market', 'megasuper', 'am pm', 'super', 'mercado'],
+        keywords: ['automercado', 'masxmenos', 'walmart', 'pali', 'maxi pali', 'pricesmart', 'fresh market', 'megasuper', 'am pm', 'ampm', 'mxm', 'super', 'mercado'],
         color: '#16a34a'
     },
     {
         name: 'Restaurantes/Cafeterías',
-        keywords: ['mcdonald', 'kfc', 'burger king', 'subway', 'pizza', 'taco bell', 'starbucks', 'restaurante', 'cafeteria', 'soda', 'ubereats', 'rappi', 'PAPA JOHN', 'CAFE', 'pops'],
+        keywords: ['mcdonald', 'kfc', 'burger king', 'subway', 'pizza', 'taco bell', 'starbucks', 'restaurante', 'cafeteria', 'soda', 'ubereats', 'rappi', 'PAPA JOHN', 'CAFE', 'pops', 'blinchik', 'bulali'],
         color: '#f97316'
     },
     {
         name: 'Transporte',
-        keywords: ['uber', 'didi', 'inDriver', 'gasolina', 'gasolinera', 'delta', 'puma', 'uno', 'texaco', 'peaje', 'parking', 'parqueo', 'RUTA'],
+        keywords: ['uber', 'didi', 'inDriver', 'gasolina', 'gasolinera', 'delta', 'puma', 'uno', 'texaco', 'peaje', 'parking', 'parqueo', 'RUTA', 'aeris holding', 'motor', 'auto'],
         color: '#2563eb'
     },
     {
         name: 'Farmacia/Salud',
-        keywords: ['farmavalue', 'fischel', 'la bomba', 'sucre', 'farmacia', 'hospital', 'clinica', 'laboratorio', 'medico', 'dra'],
+        keywords: ['farmavalue', 'fischel', 'la bomba', 'sucre', 'farmacia', 'hospital', 'clinica', 'laboratorio', 'medico', 'dra', 'gnc'],
         color: '#dc2626'
     },
     {
         name: 'Ropa/Calzado',
-        keywords: ['h&m', 'zara', 'mango', 'siman', 'ekono', 'pequeno mundo', 'universal', 'tienda', 'ropa', 'calzado'],
+        keywords: ['h&m', 'zara', 'mango', 'siman', 'ekono', 'pequeno mundo', 'universal', 'tienda', 'ropa', 'calzado', 'boutique'],
         color: '#7c3aed'
+    },
+    {
+        name: 'Hogar',
+        keywords: ['ferreteria', 'el rey'],
+        color: '#6b7280'
     },
     {
         name: 'Gastos fijos',
         keywords: ['netflix', 'spotify', 'google', 'apple', 'amazon', 'steam', 'playstation', 'disney', 'youtube', 'icloud', 'CCSS',
              'ice', 'kolbi', 'cnfl', 'aya', 'acueductos', 'electricidad', 'agua', 'internet', 'telefonia', 'claro', 'liberty', 'tigo',
-             'SMARTFIT'],
+             'SMARTFIT', 'chatgpt', 'openai', 'opensource'],
         color: '#0891b2'
     },
     {
         name: 'Transferencias/SINPE',
-        keywords: ['sinpe', 'sinpe movil', 'transferencia', 'transfer', 'deposito', 'SALDO', 'TEF A', 'TEF B', 'intereses'],
+        keywords: ['sinpe', 'sinpe movil', 'transferencia', 'transfer', 'deposito', 'SALDO', 'TEF A', 'TEF B', 'intereses', 'tef de', 'ret. s/tarjeta'],
         color: '#0d9488'
     },
     {
         name: 'Mascotas',
-        keywords: ['pet', 'mascota', 'vet', 'perro', 'gato', 'animal'],
+        keywords: ['pet', 'mascota', 'vet', 'perro', 'gato', 'animal', 'maskoticas'],
         color: '#ca8a04'
     },
     {
@@ -169,10 +174,42 @@ function saveCategories() {
     setLocalStorageValue(CATEGORIES_LOCAL_STORAGE_KEY, JSON.stringify(state.categories));
 }
 
+function clearCategoriesCookie() {
+    document.cookie = `${CATEGORIES_COOKIE_NAME}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; SameSite=Lax`;
+}
+
+function cloneDefaultCategories() {
+    return defaultCategories.map(category => ({
+        ...category,
+        keywords: [...category.keywords]
+    }));
+}
+
+function clearCategoryCookies() {
+    const confirmed = confirm('¿Eliminar cookies y restablecer categorías por defecto?');
+    if (!confirmed) {
+        return;
+    }
+
+    clearCategoriesCookie();
+
+    try {
+        localStorage.removeItem(CATEGORIES_LOCAL_STORAGE_KEY);
+    } catch (error) {
+        console.warn('Could not clear localStorage categories:', error);
+    }
+
+    state.categories = cloneDefaultCategories();
+    saveCategories();
+    renderCategories();
+
+    alert('Cookies eliminadas. Categorías restablecidas.');
+}
+
 // Render categories
 function renderCategories() {
     const container = document.getElementById('categoriesList');
-    container.innerHTML = state.categories.map((cat, index) => `
+    const categoriesHtml = state.categories.map((cat, index) => `
         <div class="category-item" style="border-color: ${cat.color}33; border-left: 6px solid ${cat.color};">
             <button class="delete-category" onclick="deleteCategory(${index})">×</button>
             <h4 style="color: ${cat.color};">${cat.name}</h4>
@@ -181,6 +218,18 @@ function renderCategories() {
             </div>
         </div>
     `).join('');
+
+    const resetCardHtml = `
+        <button class="category-item category-reset-item" onclick="clearCategoryCookies()" type="button">
+            <h4>↺ Restablecer categorías</h4>
+            <div class="category-keywords">
+                <span>Eliminar cookies</span>
+                <span>Cargar valores por defecto</span>
+            </div>
+        </button>
+    `;
+
+    container.innerHTML = categoriesHtml + resetCardHtml;
 }
 
 // Delete category
@@ -452,9 +501,37 @@ function renderChart() {
         options: {
             responsive: true,
             maintainAspectRatio: true,
+            onClick: (event, elements) => {
+                if (!elements || elements.length === 0) {
+                    return;
+                }
+
+                const clickedIndex = elements[0].index;
+                const categoryName = labels[clickedIndex];
+                if (!categoryName) {
+                    return;
+                }
+
+                state.selectedCategory = categoryName;
+                filterTransactions();
+            },
+            onHover: (event, elements) => {
+                if (event?.native?.target) {
+                    event.native.target.style.cursor = elements.length ? 'pointer' : 'default';
+                }
+            },
             plugins: {
                 legend: {
-                    position: 'bottom'
+                    position: 'bottom',
+                    onClick: (event, legendItem) => {
+                        const categoryName = legendItem?.text;
+                        if (!categoryName) {
+                            return;
+                        }
+
+                        state.selectedCategory = categoryName;
+                        filterTransactions();
+                    }
                 },
                 tooltip: {
                     callbacks: {

@@ -351,6 +351,7 @@ function analyzeTransactions() {
     
     // Show results
     document.getElementById('resultsSection').classList.remove('hidden');
+    document.getElementById('categoriesSection').classList.add('hidden');
     
     // Render
     renderChart();

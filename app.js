@@ -9,7 +9,8 @@ const state = {
     pdfPages: [],
     transactions: [],
     categories: [],
-    filteredTransactions: []
+    filteredTransactions: [],
+    selectedCategory: ''
 };
 
 const {
@@ -278,11 +279,7 @@ function setupEventListeners() {
     // Buttons
     document.getElementById('addCategoryBtn').addEventListener('click', addCategory);
     document.getElementById('analyzeBtn').addEventListener('click', analyzeTransactions);
-    document.getElementById('exportBtn').addEventListener('click', exportToCSV);
     
-    // Search and filters
-    document.getElementById('searchTransactions').addEventListener('input', filterTransactions);
-    document.getElementById('filterCategory').addEventListener('change', filterTransactions);
 }
 
 // Handle file selection
@@ -348,6 +345,7 @@ function analyzeTransactions() {
     transactions = categorizeTransactions(transactions);
     state.transactions = transactions;
     state.filteredTransactions = transactions;
+    state.selectedCategory = '';
     
     // Show results
     document.getElementById('resultsSection').classList.remove('hidden');
@@ -357,7 +355,6 @@ function analyzeTransactions() {
     renderChart();
     renderCategoryDetails();
     renderTransactionsTable();
-    populateCategoryFilter();
 }
 
 function getCurrencySymbol(currency) {
@@ -489,14 +486,17 @@ function renderCategoryDetails() {
     
     const totalAmount = state.transactions.reduce((sum, t) => sum + t.amount, 0);
     const currencySymbol = getCurrencySymbol(getPrimaryCurrency(state.transactions));
+    const selectedCategory = state.selectedCategory;
     
     // Sort by amount descending
     const sorted = Object.entries(categoryTotals).sort((a, b) => b[1].total - a[1].total);
     
     const html = sorted.map(([category, data]) => {
         const percentage = ((data.total / totalAmount) * 100).toFixed(1);
+        const isActive = selectedCategory === category;
+
         return `
-            <div class="category-detail">
+            <div class="category-detail ${isActive ? 'active' : ''}" onclick="showCategoryTransactions('${encodeURIComponent(category)}')">
                 <div class="category-detail-header">
                     <span class="category-name">${category}</span>
                     <span class="category-amount">${data.total.toFixed(2)} ${currencySymbol}</span>
@@ -512,9 +512,21 @@ function renderCategoryDetails() {
     document.getElementById('categoryDetails').innerHTML = html;
 }
 
+function showCategoryTransactions(encodedCategoryName) {
+    const categoryName = decodeURIComponent(encodedCategoryName);
+    state.selectedCategory = categoryName;
+
+    filterTransactions();
+}
+
 // Render transactions table
 function renderTransactionsTable() {
     const tbody = document.getElementById('transactionsBody');
+    const title = document.getElementById('transactionsTitle');
+
+    if (title) {
+        title.textContent = state.selectedCategory || 'Todas las transacciones';
+    }
     
     const html = state.filteredTransactions.map(t => `
         <tr>
@@ -532,31 +544,18 @@ function renderTransactionsTable() {
     tbody.innerHTML = html;
 }
 
-// Populate category filter
-function populateCategoryFilter() {
-    const select = document.getElementById('filterCategory');
-    const categories = [...new Set(state.transactions.map(t => t.category))].sort();
-    
-    select.innerHTML = '<option value="">Todas las categorías</option>' + 
-        categories.map(cat => `<option value="${cat}">${cat}</option>`).join('');
-}
-
 // Filter transactions
 function filterTransactions() {
-    const searchText = document.getElementById('searchTransactions').value.toLowerCase();
-    const categoryFilter = document.getElementById('filterCategory').value;
+    const categoryFilter = state.selectedCategory;
     
     state.filteredTransactions = state.transactions.filter(t => {
-        const matchesSearch = !searchText || 
-            t.description.toLowerCase().includes(searchText) ||
-            t.date.includes(searchText);
-        
         const matchesCategory = !categoryFilter || t.category === categoryFilter;
         
-        return matchesSearch && matchesCategory;
+        return matchesCategory;
     });
     
     renderTransactionsTable();
+    renderCategoryDetails();
 }
 
 // Export to CSV

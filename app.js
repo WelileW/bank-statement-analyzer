@@ -205,6 +205,7 @@ function clearCategoryCookies() {
     state.categories = cloneDefaultCategories();
     saveCategories();
     renderCategories();
+    rerunAnalysisFromSettings();
 
     alert('Cookies eliminadas. Categorías restablecidas.');
 }
@@ -240,6 +241,7 @@ function deleteCategory(index) {
     state.categories.splice(index, 1);
     saveCategories();
     renderCategories();
+    rerunAnalysisFromSettings();
 }
 
 // Add new category
@@ -271,6 +273,7 @@ function addCategory() {
         existingCategory.keywords.push(...newKeywords);
         saveCategories();
         renderCategories();
+        rerunAnalysisFromSettings();
 
         nameInput.value = '';
         keywordsInput.value = '';
@@ -285,6 +288,7 @@ function addCategory() {
     
     saveCategories();
     renderCategories();
+    rerunAnalysisFromSettings();
     
     nameInput.value = '';
     keywordsInput.value = '';
@@ -301,6 +305,7 @@ function setupEventListeners() {
     const fileInput = document.getElementById('pdfFile');
     const uploadBox = document.querySelector('.upload-box');
     const showAllTransactionsBtn = document.getElementById('showAllTransactionsBtn');
+    const toggleCategoriesBtn = document.getElementById('toggleCategoriesBtn');
     
     // File upload
     fileInput.addEventListener('click', () => {
@@ -338,6 +343,11 @@ function setupEventListeners() {
     if (showAllTransactionsBtn) {
         showAllTransactionsBtn.addEventListener('click', showAllTransactions);
     }
+    if (toggleCategoriesBtn) {
+        toggleCategoriesBtn.addEventListener('click', toggleCategoriesSettings);
+    }
+
+    updateCategoriesToggleButtonLabel();
     
 }
 
@@ -348,6 +358,37 @@ function showAllTransactions() {
 
     state.selectedCategory = '';
     filterTransactions();
+}
+
+function updateCategoriesToggleButtonLabel() {
+    const toggleButton = document.getElementById('toggleCategoriesBtn');
+    const categoriesSection = document.getElementById('categoriesSection');
+
+    if (!toggleButton || !categoriesSection) {
+        return;
+    }
+
+    toggleButton.textContent = categoriesSection.classList.contains('hidden')
+        ? '⚙️ Mostrar configuración'
+        : '⚙️ Ocultar configuración';
+}
+
+function toggleCategoriesSettings() {
+    const categoriesSection = document.getElementById('categoriesSection');
+    if (!categoriesSection || !state.pdfText) {
+        return;
+    }
+
+    categoriesSection.classList.toggle('hidden');
+    updateCategoriesToggleButtonLabel();
+}
+
+function rerunAnalysisFromSettings() {
+    if (!state.pdfText) {
+        return;
+    }
+
+    analyzeTransactions({ keepCategoriesSectionVisible: true });
 }
 
 function resetAnalysisBeforeNewFile() {
@@ -375,6 +416,8 @@ function resetAnalysisBeforeNewFile() {
     if (categoriesSection) {
         categoriesSection.classList.add('hidden');
     }
+
+    updateCategoriesToggleButtonLabel();
 
     if (categoryDetails) {
         categoryDetails.innerHTML = '';
@@ -411,7 +454,7 @@ async function handleFileSelect(e) {
         state.pdfPages = pages;
         
         document.getElementById('loader').classList.add('hidden');
-        document.getElementById('categoriesSection').classList.remove('hidden');
+        analyzeTransactions();
     } catch (error) {
         console.error('Error while processing PDF:', error);
         alert('Error al leer el archivo PDF. Verifica el formato del archivo.');
@@ -444,7 +487,9 @@ function categorizeTransactions(transactions) {
 }
 
 // Analyze transactions
-function analyzeTransactions() {
+function analyzeTransactions(options = {}) {
+    const { keepCategoriesSectionVisible = false } = options;
+
     console.log(state.pdfText);
     console.log('PDF lines with X coordinates:', state.pdfLinesWithX);
     console.log('PDF pages:', state.pdfPages);
@@ -474,7 +519,13 @@ function analyzeTransactions() {
     
     // Show results
     document.getElementById('resultsSection').classList.remove('hidden');
-    document.getElementById('categoriesSection').classList.add('hidden');
+    if (keepCategoriesSectionVisible) {
+        document.getElementById('categoriesSection').classList.remove('hidden');
+    } else {
+        document.getElementById('categoriesSection').classList.add('hidden');
+    }
+
+    updateCategoriesToggleButtonLabel();
     
     // Render
     renderChart();

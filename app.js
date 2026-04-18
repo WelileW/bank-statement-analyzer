@@ -728,7 +728,7 @@ function renderCategoryDetails() {
             <div class="category-detail ${isActive ? 'active' : ''} ${isIncomeCategory ? 'income-category' : ''}" onclick="showCategoryTransactions('${encodeURIComponent(category)}')">
                 <div class="category-detail-header">
                     <span class="category-name">${category}</span>
-                    <span class="category-amount">${data.total < 0 ? '-' : '+'}${Math.abs(data.total).toFixed(2)} ${currencySymbol}</span>
+                    <span class="category-amount">${Math.abs(data.total).toFixed(2)} ${currencySymbol}</span>
                 </div>
                 <div class="category-percentage">${data.count} transacciones</div>
             </div>
@@ -760,14 +760,14 @@ function renderTransactionsTable() {
     }
 
     if (totalElement) {
-        totalElement.textContent = `• ${visibleTotal.toFixed(2)} ${currencySymbol}`;
+        totalElement.textContent = `• ${Math.abs(visibleTotal).toFixed(2)} ${currencySymbol}`;
     }
     
     const html = state.filteredTransactions.map(t => `
         <tr class="${state.excludedTransactionIds.has(t.id) ? 'transaction-excluded' : ''}" onclick="toggleTransactionExcluded('${t.id}')">
             <td class="transaction-date">${t.date}</td>
             <td>${t.description}</td>
-            <td class="transaction-amount">${t.amount < 0 ? '-' : '+'}${Math.abs(t.amount).toFixed(2)} ${getCurrencySymbol(t.currency)}</td>
+            <td class="transaction-amount">${Math.abs(t.amount).toFixed(2)} ${getCurrencySymbol(t.currency)}</td>
             <td>
                 <span class="transaction-category ${t.category === 'Sin categoría' ? 'uncategorized' : ''}">
                     ${t.category}

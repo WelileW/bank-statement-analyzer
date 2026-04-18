@@ -23,6 +23,7 @@ const CATEGORIES_COOKIE_NAME = 'statement_categories';
 const CATEGORIES_COOKIE_DAYS = 365;
 const CATEGORIES_LOCAL_STORAGE_KEY = 'categories';
 const USD_TO_COLONES_RATE = 470;
+const INCOME_CATEGORY_NAME = 'Ingresos';
 
 // Default categories
 const defaultCategories = [
@@ -299,6 +300,7 @@ function getRandomColor() {
 function setupEventListeners() {
     const fileInput = document.getElementById('pdfFile');
     const uploadBox = document.querySelector('.upload-box');
+    const showAllTransactionsBtn = document.getElementById('showAllTransactionsBtn');
     
     // File upload
     fileInput.addEventListener('change', handleFileSelect);
@@ -330,7 +332,19 @@ function setupEventListeners() {
     // Buttons
     document.getElementById('addCategoryBtn').addEventListener('click', addCategory);
     document.getElementById('analyzeBtn').addEventListener('click', analyzeTransactions);
+    if (showAllTransactionsBtn) {
+        showAllTransactionsBtn.addEventListener('click', showAllTransactions);
+    }
     
+}
+
+function showAllTransactions() {
+    if (!state.transactions.length) {
+        return;
+    }
+
+    state.selectedCategory = '';
+    filterTransactions();
 }
 
 // Handle file selection
@@ -360,6 +374,13 @@ async function handleFileSelect(e) {
 // Categorize transactions
 function categorizeTransactions(transactions) {
     return transactions.map(transaction => {
+        if (transaction.amount > 0) {
+            return {
+                ...transaction,
+                category: INCOME_CATEGORY_NAME
+            };
+        }
+
         const descLower = transaction.description.toLowerCase();
         
         for (const category of state.categories) {
@@ -485,7 +506,17 @@ function renderChart() {
         if ((t.category || '').toLowerCase() === excludedFromPie) {
             return;
         }
-        categoryTotals[t.category] = (categoryTotals[t.category] || 0) + convertToColones(t.amount, t.currency);
+
+        if ((t.category || '') === INCOME_CATEGORY_NAME) {
+            return;
+        }
+
+        const amountInColones = convertToColones(t.amount, t.currency);
+        if (amountInColones >= 0) {
+            return;
+        }
+
+        categoryTotals[t.category] = (categoryTotals[t.category] || 0) + Math.abs(amountInColones);
     });
     
     const labels = Object.keys(categoryTotals);
@@ -562,10 +593,12 @@ function renderCategoryDetails() {
     const categoryTotals = {};
     
     state.transactions.forEach(t => {
+        const amountInColones = convertToColones(t.amount, t.currency);
+
         if (!categoryTotals[t.category]) {
             categoryTotals[t.category] = { total: 0, count: 0 };
         }
-        categoryTotals[t.category].total += convertToColones(t.amount, t.currency);
+        categoryTotals[t.category].total += amountInColones;
         categoryTotals[t.category].count += 1;
     });
     
@@ -573,16 +606,30 @@ function renderCategoryDetails() {
     const currencySymbol = '₡';
     
     // Sort by amount descending
-    const sorted = Object.entries(categoryTotals).sort((a, b) => b[1].total - a[1].total);
+    const sorted = Object.entries(categoryTotals).sort((a, b) => {
+        const [categoryA, dataA] = a;
+        const [categoryB, dataB] = b;
+
+        if (categoryA === INCOME_CATEGORY_NAME && categoryB !== INCOME_CATEGORY_NAME) {
+            return -1;
+        }
+
+        if (categoryB === INCOME_CATEGORY_NAME && categoryA !== INCOME_CATEGORY_NAME) {
+            return 1;
+        }
+
+        return Math.abs(dataB.total) - Math.abs(dataA.total);
+    });
     
     const html = sorted.map(([category, data]) => {
         const isActive = selectedCategory === category;
+        const isIncomeCategory = category === INCOME_CATEGORY_NAME;
 
         return `
-            <div class="category-detail ${isActive ? 'active' : ''}" onclick="showCategoryTransactions('${encodeURIComponent(category)}')">
+            <div class="category-detail ${isActive ? 'active' : ''} ${isIncomeCategory ? 'income-category' : ''}" onclick="showCategoryTransactions('${encodeURIComponent(category)}')">
                 <div class="category-detail-header">
                     <span class="category-name">${category}</span>
-                    <span class="category-amount">${data.total.toFixed(2)} ${currencySymbol}</span>
+                    <span class="category-amount">${data.total < 0 ? '-' : '+'}${Math.abs(data.total).toFixed(2)} ${currencySymbol}</span>
                 </div>
                 <div class="category-percentage">${data.count} transacciones</div>
             </div>
@@ -621,7 +668,7 @@ function renderTransactionsTable() {
         <tr class="${state.excludedTransactionIds.has(t.id) ? 'transaction-excluded' : ''}" onclick="toggleTransactionExcluded('${t.id}')">
             <td class="transaction-date">${t.date}</td>
             <td>${t.description}</td>
-            <td class="transaction-amount">-${t.amount.toFixed(2)} ${getCurrencySymbol(t.currency)}</td>
+            <td class="transaction-amount">${t.amount < 0 ? '-' : '+'}${Math.abs(t.amount).toFixed(2)} ${getCurrencySymbol(t.currency)}</td>
             <td>
                 <span class="transaction-category ${t.category === 'Sin categoría' ? 'uncategorized' : ''}">
                     ${t.category}

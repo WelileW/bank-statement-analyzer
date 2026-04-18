@@ -337,6 +337,10 @@ header p {
     font-size: 1.3em;
 }
 
+#showAllTransactionsBtn {
+    cursor: pointer;
+}
+
 .transactions-total {
     margin-left: 8px;
     color: #667eea;
@@ -368,6 +372,16 @@ header p {
 
 .category-detail.active {
     box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+}
+
+.category-detail.income-category {
+    border-left-color: #16a34a;
+    background: #f0fdf4;
+}
+
+.category-detail.income-category .category-name,
+.category-detail.income-category .category-amount {
+    color: #166534;
 }
 
 .category-detail-header {

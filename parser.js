@@ -44,6 +44,10 @@ function parseAmountValue(raw) {
         clean = clean.replace(',', '.');
     }
 
+    if (clean.startsWith('.')) {
+        clean = `0${clean}`;
+    }
+
     if (!/^\d+(?:\.\d+)?$/.test(clean)) {
         return null;
     }
@@ -58,20 +62,21 @@ function parseAmountValue(raw) {
 
 function extractAmountsFromLineWithX(lineWithX) {
     const amounts = [];
-    const tokenRegex = /\[x=(\d+)\]\s*([^\[]+)/g;
+    const tokenRegex = /\[x=(\d+)\](?:\[r=(\d+)\])?\s*([^\[]+)/g;
     let match;
 
     while ((match = tokenRegex.exec(lineWithX)) !== null) {
         const x = parseInt(match[1], 10);
-        const token = match[2].trim();
+        const rightX = match[2] ? parseInt(match[2], 10) : x;
+        const token = match[3].trim();
         const value = parseAmountValue(token);
 
         if (value !== null) {
-            amounts.push({ x, value, raw: token });
+            amounts.push({ x, rightX, value, raw: token });
         }
     }
 
-    return amounts.sort((a, b) => a.x - b.x);
+    return amounts.sort((a, b) => a.rightX - b.rightX);
 }
 
 function extractReferenceAndDate(line) {
@@ -124,31 +129,48 @@ function cleanDescription(row, debitRaw, creditRaw) {
 }
 
 function isUnsupportedTransactionDescription(description) {
-    const normalized = normalizeForMatch(description || '');
-    return normalized.includes('INTERESES');
+    return false;
 }
 
 function mapRowsToTransactions(rows, currentCurrency) {
     const transactions = [];
 
     for (const row of rows) {
-        let debit = 0;
-        let credit = 0;
-        let debitRaw = '';
-        let creditRaw = '';
+        const debitCandidates = row.amounts.filter(amount => amount.rightX <= PARSER_CONSTANTS.creditXThreshold);
+        const creditCandidates = row.amounts.filter(amount => amount.rightX > PARSER_CONSTANTS.creditXThreshold);
 
-        const lastAmount = row.amounts[row.amounts.length - 1];
-        if (lastAmount.x > PARSER_CONSTANTS.creditXThreshold) {
-            credit = lastAmount.value;
-            creditRaw = lastAmount.raw;
-        } else {
-            debit = lastAmount.value;
-            debitRaw = lastAmount.raw;
-        }
+        const debitEntry = debitCandidates.length > 0 ? debitCandidates[debitCandidates.length - 1] : null;
+        const creditEntry = creditCandidates.length > 0 ? creditCandidates[creditCandidates.length - 1] : null;
 
-        if (debit <= 0) {
+        if (!debitEntry && !creditEntry) {
             continue;
         }
+
+        let signedAmount = 0;
+        let movementType = '';
+
+        if (creditEntry && !debitEntry) {
+            signedAmount = creditEntry.value;
+            movementType = 'credit';
+        } else if (debitEntry && !creditEntry) {
+            signedAmount = -debitEntry.value;
+            movementType = 'debit';
+        } else if (creditEntry && debitEntry) {
+            if (creditEntry.rightX >= debitEntry.rightX) {
+                signedAmount = creditEntry.value;
+                movementType = 'credit';
+            } else {
+                signedAmount = -debitEntry.value;
+                movementType = 'debit';
+            }
+        }
+
+        if (!Number.isFinite(signedAmount) || signedAmount === 0) {
+            continue;
+        }
+
+        const debitRaw = debitEntry ? debitEntry.raw : '';
+        const creditRaw = creditEntry ? creditEntry.raw : '';
 
         const description = cleanDescription(row, debitRaw, creditRaw);
 
@@ -160,7 +182,8 @@ function mapRowsToTransactions(rows, currentCurrency) {
             date: row.date,
             reference: row.reference,
             description,
-            amount: debit,
+            amount: signedAmount,
+            movementType,
             currency: currentCurrency || 'N/A',
             category: 'Sin categoría'
         });
@@ -319,7 +342,9 @@ function extractLinesFromTextContent(textContent) {
         .map(item => ({
             str: item.str,
             x: item.transform[4],
-            y: item.transform[5]
+            y: item.transform[5],
+            width: Number.isFinite(item.width) ? item.width : 0,
+            rightX: item.transform[4] + (Number.isFinite(item.width) ? item.width : 0)
         }))
         .sort((a, b) => {
             const yDiff = b.y - a.y;
@@ -339,7 +364,7 @@ function extractLinesFromTextContent(textContent) {
         if (!cleanLine) return;
 
         const lineWithX = lineItems
-            .map(part => `[x=${Math.round(part.x)}] ${part.str}`)
+            .map(part => `[x=${Math.round(part.x)}][r=${Math.round(part.rightX)}] ${part.str}`)
             .join(' ')
             .replace(/\s+/g, ' ')
             .trim();

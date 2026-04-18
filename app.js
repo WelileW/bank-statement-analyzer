@@ -303,6 +303,9 @@ function setupEventListeners() {
     const showAllTransactionsBtn = document.getElementById('showAllTransactionsBtn');
     
     // File upload
+    fileInput.addEventListener('click', () => {
+        fileInput.value = '';
+    });
     fileInput.addEventListener('change', handleFileSelect);
     
     // Drag and drop
@@ -347,10 +350,55 @@ function showAllTransactions() {
     filterTransactions();
 }
 
+function resetAnalysisBeforeNewFile() {
+    state.transactions = [];
+    state.filteredTransactions = [];
+    state.selectedCategory = '';
+    state.excludedTransactionIds.clear();
+
+    if (window.chartInstance) {
+        window.chartInstance.destroy();
+        window.chartInstance = null;
+    }
+
+    const resultsSection = document.getElementById('resultsSection');
+    const categoriesSection = document.getElementById('categoriesSection');
+    const categoryDetails = document.getElementById('categoryDetails');
+    const transactionsBody = document.getElementById('transactionsBody');
+    const transactionsTitle = document.getElementById('transactionsTitle');
+    const transactionsTotal = document.getElementById('transactionsTotal');
+
+    if (resultsSection) {
+        resultsSection.classList.add('hidden');
+    }
+
+    if (categoriesSection) {
+        categoriesSection.classList.add('hidden');
+    }
+
+    if (categoryDetails) {
+        categoryDetails.innerHTML = '';
+    }
+
+    if (transactionsBody) {
+        transactionsBody.innerHTML = '';
+    }
+
+    if (transactionsTitle) {
+        transactionsTitle.textContent = 'Todas las transacciones';
+    }
+
+    if (transactionsTotal) {
+        transactionsTotal.textContent = '';
+    }
+}
+
 // Handle file selection
 async function handleFileSelect(e) {
     const file = e.target.files[0];
     if (!file) return;
+
+    resetAnalysisBeforeNewFile();
     
     document.getElementById('fileName').textContent = `Archivo seleccionado: ${file.name}`;
     document.getElementById('loader').classList.remove('hidden');
